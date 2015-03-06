@@ -2,7 +2,6 @@
 
 precision highp float;
 
-#extension GL_EXT_shadow_samplers : require
 #extension GL_NV_shadow_samplers_cube : enable
 
 out vec4 FragColor;
@@ -20,7 +19,7 @@ in vec4 vProjectiveCoord;
 uniform sampler2D texture;
 uniform sampler2D normalMap;
 
-uniform sampler2DShadow shadowmap;
+uniform sampler2D shadowmap;
 uniform samplerCube cubeMap;
 
 uniform vec4 u_ambient;
@@ -31,18 +30,20 @@ uniform float u_specularPower;
 //------------------------------
 float makeShadow() {
 
-   float shadowMap;
+   float shadowMap = 0.0;
    float offset = 1.0 / 2048.0;
 
    vec4 crd = vProjectiveCoord;
 
-   for (float y = -1.5 ; y <= 1.5 ; y += 1.0) {
+      for (float y = -1.5 ; y <= 1.5 ; y += 1.0) {
         for (float x = -1.5 ; x <= 1.5 ; x += 1.0) {
-			shadowMap += shadow2DProjEXT(shadowmap, crd + vec4(x * offset * crd.w, y * offset * crd.w, 0.0, 0.0));
-		}
-   }
+            
+            float shadow = texture2DProj(shadowmap, crd + vec4(x * offset * crd.w, y * offset * crd.w, 0.0, 0.0));
+            shadowMap += float(shadow < crd.z / crd.w ? 0.0 : 1.0);
+        }
+      }
    
-   return (shadowMap / 16.0);
+   return float(shadowMap / 16.0);
 }
 
 //------------------------------
